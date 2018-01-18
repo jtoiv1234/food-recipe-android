@@ -207,7 +207,7 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
                     searchTerms = searchTerms.replace(" ", "%20");
                     builder.appendQueryParameter("q", searchTerms);
                 }
-                FetchJSONTask fetchJSONTask = new FetchJSONTask(builder, this, FetchJSONTask.ResponseMethod.GET);
+                FetchJSONTask fetchJSONTask = new FetchJSONTask(builder, this, FetchJSONTask.RequestMethod.GET);
                 fetchJSONTask.execute();
             }
             if (selectedMenuId == favouriteRecipesMenuId) {
