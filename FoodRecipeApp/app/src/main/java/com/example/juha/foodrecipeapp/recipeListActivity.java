@@ -27,16 +27,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 
-public class recipeListActivity extends AppCompatActivity {
+public class recipeListActivity extends AppCompatActivity implements OnTaskComplete {
 
     private final String SORT_BY_RATING = "r";
     private final String SORT_BY_TREND = "t";
@@ -104,8 +98,7 @@ public class recipeListActivity extends AppCompatActivity {
                         if ((visibleItemCount + pastVisiblesItems) >= totalItemCount) {
                             isLoading = false;
                             page = page + 1;
-                            FetchRecipesTask fetchRecipesTask = new FetchRecipesTask();
-                            fetchRecipesTask.execute();
+                            getNewRecipes();
                         }
                     }
                 }
@@ -116,25 +109,29 @@ public class recipeListActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextSubmit(String s) {
-                getNewRecipesFromAPI();
+                clearRecipeListAndResetPage();
+                getNewRecipes();
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String s) {
                 if (s.isEmpty()) {
-                    getNewRecipesFromAPI();
+                    clearRecipeListAndResetPage();
+                    getNewRecipes();
                     return true;
                 }
                 return false;
             }
         });
+        clearRecipeListAndResetPage();
         getNewRecipes();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        clearRecipeListAndResetPage();
         getNewRecipes();
     }
 
@@ -153,12 +150,14 @@ public class recipeListActivity extends AppCompatActivity {
             case R.id.menu_item_popularity:
                 searchViewRecipes.setEnabled(true);
                 textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                clearRecipeListAndResetPage();
                 sortingMethod = SORT_BY_RATING;
                 getNewRecipes();
                 return true;
             case R.id.menu_item_trendiness:
                 searchViewRecipes.setEnabled(true);
                 textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                clearRecipeListAndResetPage();
                 sortingMethod = SORT_BY_TREND;
                 getNewRecipes();
                 return true;
@@ -166,6 +165,7 @@ public class recipeListActivity extends AppCompatActivity {
                 searchViewRecipes.setVisibility(View.VISIBLE);
                 textViewFavouriteRecipesTitle.setVisibility(View.GONE);
                 selectedMenuId = findRecipesMenuId;
+                clearRecipeListAndResetPage();
                 invalidateOptionsMenu();
                 getNewRecipes();
                 return true;
@@ -173,6 +173,7 @@ public class recipeListActivity extends AppCompatActivity {
                 searchViewRecipes.setVisibility(View.GONE);
                 selectedMenuId = favouriteRecipesMenuId;
                 textViewFavouriteRecipesTitle.setVisibility(View.VISIBLE);
+                clearRecipeListAndResetPage();
                 invalidateOptionsMenu();
                 getNewRecipes();
                 return true;
@@ -187,30 +188,77 @@ public class recipeListActivity extends AppCompatActivity {
         recipeRecyclerViewAdapter.notifyDataSetChanged();
     }
 
-    private void getNewRecipesFromAPI() {
-        searchTerms = searchViewRecipes.getQuery().toString();
-        clearRecipeListAndResetPage();
-        FetchRecipesTask fetchRecipesTask = new FetchRecipesTask();
-        fetchRecipesTask.execute();
-    }
-
-    private void getNewRecipesFromDatabase() {
-        clearRecipeListAndResetPage();
-        FetchSavedRecipes fetchSavedRecipes = new FetchSavedRecipes();
-        fetchSavedRecipes.execute();
-    }
-
     private void getNewRecipes() {
         if (isLoadingNewQuery == false) {
             isLoadingNewQuery = true;
             progressBarRecipeList.setVisibility(View.VISIBLE);
             if (selectedMenuId == findRecipesMenuId) {
-                getNewRecipesFromAPI();
+                searchTerms = searchViewRecipes.getQuery().toString();
+                Uri.Builder builder = new Uri.Builder();
+                String apiKey = getString(R.string.api_key);
+                builder.scheme("http")
+                        .authority("food2fork.com")
+                        .appendPath("api")
+                        .appendPath("search")
+                        .appendQueryParameter("key", apiKey)
+                        .appendQueryParameter("sort", sortingMethod)
+                        .appendQueryParameter("page", page + "");
+                if (searchTerms.length() > 0) {
+                    searchTerms = searchTerms.replace(" ", "%20");
+                    builder.appendQueryParameter("q", searchTerms);
+                }
+                FetchJSONTask fetchJSONTask = new FetchJSONTask(builder, this, FetchJSONTask.ResponseMethod.GET);
+                fetchJSONTask.execute();
             }
             if (selectedMenuId == favouriteRecipesMenuId) {
-                getNewRecipesFromDatabase();
+                FetchSavedRecipes fetchSavedRecipes = new FetchSavedRecipes();
+                fetchSavedRecipes.execute();
             }
         }
+    }
+
+    @Override
+    public void OnTaskComplete(String response) {
+        isLoading = true;
+        if (response != null) {
+            try {
+                JSONObject responseJSONObj = new JSONObject(response);
+                int count = responseJSONObj.getInt("count");
+                if (count > 0) {
+                    emptyText.setVisibility(View.INVISIBLE);
+                } else {
+                    emptyText.setVisibility(View.VISIBLE);
+                }
+                JSONArray recipesJSONArray = responseJSONObj.getJSONArray("recipes");
+                recipes.clear();
+                recipeRecyclerViewAdapter.notifyDataSetChanged();
+                for (int i = 0; i < recipesJSONArray.length(); i++) {
+                    JSONObject recipeJSONObj = recipesJSONArray.getJSONObject(i);
+                    String id = "";
+                    String title = "";
+                    String imageURL = "";
+                    String sourceURL = "";
+                    if (recipeJSONObj.has("recipe_id")) {
+                        id = recipeJSONObj.getString("recipe_id");
+                    }
+                    if (recipeJSONObj.has("title")) {
+                        title = recipeJSONObj.getString("title");
+                    }
+                    if (recipeJSONObj.has("image_url")) {
+                        imageURL = recipeJSONObj.getString("image_url");
+                    }
+                    if (recipeJSONObj.has("source_url")) {
+                        sourceURL = recipeJSONObj.getString("source_url");
+                    }
+                    recipes.add(new Recipe(id, title, imageURL, sourceURL));
+                    recipeRecyclerViewAdapter.notifyDataSetChanged();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        isLoadingNewQuery = false;
+        progressBarRecipeList.setVisibility(View.GONE);
     }
 
     private class RecipeRecyclerViewAdapter extends RecyclerView.Adapter<RecipeRecyclerViewAdapter.ViewHolder> {
@@ -295,106 +343,6 @@ public class recipeListActivity extends AppCompatActivity {
         }
     }
 
-    private class FetchRecipesTask extends AsyncTask<Void, Void, String> {
 
-        @Override
-        protected String doInBackground(Void... voids) {
-            Uri.Builder builder = new Uri.Builder();
-            String apiKey = getString(R.string.api_key);
-            builder.scheme("http")
-                    .authority("food2fork.com")
-                    .appendPath("api")
-                    .appendPath("search")
-                    .appendQueryParameter("key", apiKey)
-                    .appendQueryParameter("sort", sortingMethod)
-                    .appendQueryParameter("page", page + "");
-            if (searchTerms.length() > 0) {
-                searchTerms = searchTerms.replace(" ", "%20");
-                builder.appendQueryParameter("q", searchTerms);
-            }
-            String apiURL = builder.build().toString();
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            try {
-                URL url = new URL(apiURL);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
-                }
-                if (buffer.length() == 0) {
-                    return null;
-                }
-                return buffer.toString();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String responseJSON) {
-            super.onPostExecute(responseJSON);
-            isLoading = true;
-            if (responseJSON != null) {
-                try {
-                    JSONObject responseJSONObj = new JSONObject(responseJSON);
-                    int count = responseJSONObj.getInt("count");
-                    if (count > 0) {
-                        emptyText.setVisibility(View.INVISIBLE);
-                    } else {
-                        emptyText.setVisibility(View.VISIBLE);
-                    }
-                    JSONArray recipesJSONArray = responseJSONObj.getJSONArray("recipes");
-                    recipes.clear();
-                    recipeRecyclerViewAdapter.notifyDataSetChanged();
-                    for (int i = 0; i < recipesJSONArray.length(); i++) {
-                        JSONObject recipeJSONObj = recipesJSONArray.getJSONObject(i);
-                        String id = "";
-                        String title = "";
-                        String imageURL = "";
-                        String sourceURL = "";
-                        if (recipeJSONObj.has("recipe_id")) {
-                            id = recipeJSONObj.getString("recipe_id");
-                        }
-                        if (recipeJSONObj.has("title")) {
-                            title = recipeJSONObj.getString("title");
-                        }
-                        if (recipeJSONObj.has("image_url")) {
-                            imageURL = recipeJSONObj.getString("image_url");
-                        }
-                        if (recipeJSONObj.has("source_url")) {
-                            sourceURL = recipeJSONObj.getString("source_url");
-                        }
-                        recipes.add(new Recipe(id, title, imageURL, sourceURL));
-                        recipeRecyclerViewAdapter.notifyDataSetChanged();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-            isLoadingNewQuery = false;
-            progressBarRecipeList.setVisibility(View.GONE);
-        }
-    }
 
 }
