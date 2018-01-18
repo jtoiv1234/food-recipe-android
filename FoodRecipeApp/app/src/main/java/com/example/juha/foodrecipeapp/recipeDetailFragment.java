@@ -19,16 +19,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 
-public class recipeDetailFragment extends Fragment {
+public class recipeDetailFragment extends Fragment implements OnTaskComplete {
 
     public static final String RECIPE_ID = "recipe_id";
     public static final String SAVED_TO_DATABASE = "saved_database";
@@ -97,15 +91,6 @@ public class recipeDetailFragment extends Fragment {
             FetchRecipeFromDatabaseTask fetchRecipeFromDatabaseTask = new FetchRecipeFromDatabaseTask();
             fetchRecipeFromDatabaseTask.execute();
         } else {
-            FetchRecipeTask fetchRecipeTask = new FetchRecipeTask();
-            fetchRecipeTask.execute();
-        }
-    }
-
-    private class FetchRecipeTask extends AsyncTask<Void, Void, String> {
-
-        @Override
-        protected String doInBackground(Void... voids) {
             Uri.Builder builder = new Uri.Builder();
             String apiKey = getString(R.string.api_key);
             builder.scheme("http")
@@ -114,92 +99,56 @@ public class recipeDetailFragment extends Fragment {
                     .appendPath("get")
                     .appendQueryParameter("key", apiKey)
                     .appendQueryParameter("rId", recipeId);
-            String apiURL = builder.build().toString();
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            try {
-                URL url = new URL(apiURL);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
-                }
-                if (buffer.length() == 0) {
-                    return null;
-                }
-                return buffer.toString();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            FetchJSONTask fetchJSONTask = new FetchJSONTask(builder, this, FetchJSONTask.ResponseMethod.GET);
+            fetchJSONTask.execute();
         }
+    }
 
-        @Override
-        protected void onPostExecute(String responseJSON) {
-            super.onPostExecute(responseJSON);
-            if (responseJSON != null) {
-                try {
-                    JSONObject responseJSONObj = new JSONObject(responseJSON);
-                    JSONObject recipeJSONObj = responseJSONObj.getJSONObject("recipe");
-                    String title = "";
-                    String imageURL = "";
-                    String sourceURL = "";
-                    ArrayList<String> ingredients = new ArrayList<>();
-                    if (recipeJSONObj.has("title")) {
-                        title = recipeJSONObj.getString("title");
-                    }
-                    if (recipeJSONObj.has("image_url")) {
-                        imageURL = recipeJSONObj.getString("image_url");
-                    }
-                    if (recipeJSONObj.has("source_url")) {
-                        sourceURL = recipeJSONObj.getString("source_url");
-                    }
-                    if (recipeJSONObj.has("ingredients")) {
-                        JSONArray jsonArrayIngredients = recipeJSONObj.getJSONArray("ingredients");
-                        for (int i = 0; i < jsonArrayIngredients.length(); i++) {
-                            String ingredient = jsonArrayIngredients.getString(i);
-                            ingredients.add(ingredient);
-                        }
-                    }
-                    String ingredientsAsString = "";
-                    for (int i = 0; i < ingredients.size(); i++) {
-                        String ingredient = ingredients.get(i);
-                        ingredientsAsString = ingredientsAsString + "\u2022 " + ingredient + "\n";
-                    }
-                    Picasso.with(getContext())
-                            .load(imageURL)
-                            .placeholder(R.drawable.ic_place_holder)
-                            .error(R.mipmap.ic_error_text)
-                            .into(imageViewRecipeImage);
-                    recipe = new Recipe(recipeId, title, imageURL, sourceURL, ingredients);
-                    textViewRecipeSourceURL.setText(sourceURL);
-                    textViewRecipeIngredients.setText(ingredientsAsString);
-                    textViewRecipeTitle.setText(title);
-                    if (appBarLayout != null) {
-                        appBarLayout.setTitle(title);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
+    @Override
+    public void OnTaskComplete(String response) {
+        if (response != null) {
+            try {
+                JSONObject responseJSONObj = new JSONObject(response);
+                JSONObject recipeJSONObj = responseJSONObj.getJSONObject("recipe");
+                String title = "";
+                String imageURL = "";
+                String sourceURL = "";
+                ArrayList<String> ingredients = new ArrayList<>();
+                if (recipeJSONObj.has("title")) {
+                    title = recipeJSONObj.getString("title");
                 }
+                if (recipeJSONObj.has("image_url")) {
+                    imageURL = recipeJSONObj.getString("image_url");
+                }
+                if (recipeJSONObj.has("source_url")) {
+                    sourceURL = recipeJSONObj.getString("source_url");
+                }
+                if (recipeJSONObj.has("ingredients")) {
+                    JSONArray jsonArrayIngredients = recipeJSONObj.getJSONArray("ingredients");
+                    for (int i = 0; i < jsonArrayIngredients.length(); i++) {
+                        String ingredient = jsonArrayIngredients.getString(i);
+                        ingredients.add(ingredient);
+                    }
+                }
+                String ingredientsAsString = "";
+                for (int i = 0; i < ingredients.size(); i++) {
+                    String ingredient = ingredients.get(i);
+                    ingredientsAsString = ingredientsAsString + "\u2022 " + ingredient + "\n";
+                }
+                Picasso.with(getContext())
+                        .load(imageURL)
+                        .placeholder(R.drawable.ic_place_holder)
+                        .error(R.mipmap.ic_error_text)
+                        .into(imageViewRecipeImage);
+                recipe = new Recipe(recipeId, title, imageURL, sourceURL, ingredients);
+                textViewRecipeSourceURL.setText(sourceURL);
+                textViewRecipeIngredients.setText(ingredientsAsString);
+                textViewRecipeTitle.setText(title);
+                if (appBarLayout != null) {
+                    appBarLayout.setTitle(title);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
         }
     }
