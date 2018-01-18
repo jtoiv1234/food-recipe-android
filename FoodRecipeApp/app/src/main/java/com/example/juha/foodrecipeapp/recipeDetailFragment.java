@@ -79,7 +79,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                 }
             }
         });
-        CheckIfRecipeIsSavedToDatabase checkIfRecipeIsSavedToDatabase = new CheckIfRecipeIsSavedToDatabase();
+        IsRecipeIsSavedToDatabase checkIfRecipeIsSavedToDatabase = new IsRecipeIsSavedToDatabase();
         checkIfRecipeIsSavedToDatabase.execute();
         return rootView;
     }
@@ -99,7 +99,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                     .appendPath("get")
                     .appendQueryParameter("key", apiKey)
                     .appendQueryParameter("rId", recipeId);
-            FetchJSONTask fetchJSONTask = new FetchJSONTask(builder, this, FetchJSONTask.ResponseMethod.GET);
+            FetchJSONTask fetchJSONTask = new FetchJSONTask(builder, this, FetchJSONTask.RequestMethod.GET);
             fetchJSONTask.execute();
         }
     }
@@ -220,7 +220,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
         }
     }
 
-    private class CheckIfRecipeIsSavedToDatabase extends AsyncTask<Void, Void, Boolean> {
+    private class IsRecipeIsSavedToDatabase extends AsyncTask<Void, Void, Boolean> {
 
         @Override
         protected Boolean doInBackground(Void... voids) {
