@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +27,8 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
 
     public static final String RECIPE_ID = "recipe_id";
     public static final String SAVED_TO_DATABASE = "saved_database";
+
+    private View rootView;
 
     private String recipeId;
     private Recipe recipe;
@@ -60,7 +63,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.recipe_detail, container, false);
+        rootView = inflater.inflate(R.layout.recipe_detail, container, false);
         textViewRecipeTitle = (TextView) rootView.findViewById(R.id.recipe_detail_title);
         textViewRecipeSourceURL = (TextView) rootView.findViewById(R.id.recipe_detail_source);
         textViewRecipeIngredients = (TextView) rootView.findViewById(R.id.recipe_detail_ingredients);
@@ -165,6 +168,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            Snackbar.make(rootView, getString(R.string.recipe_added_to_favourites), Snackbar.LENGTH_SHORT).show();
             isRecipeSavedToFabourites = true;
             buttonFavouriteRecipe.setText(getString(R.string.remove_from_favourites));
         }
@@ -182,6 +186,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            Snackbar.make(rootView, getString(R.string.recipe_removed_from_favourites), Snackbar.LENGTH_SHORT).show();
             isRecipeSavedToFabourites = false;
             buttonFavouriteRecipe.setText(getString(R.string.add_to_favourites));
         }
