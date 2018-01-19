@@ -49,10 +49,8 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
     private ProgressBar progressBarRecipeList;
 
     private int page;
-    private String searchTerms;
     private boolean isLoading;
     private boolean isLoadingNewQuery;
-    private int pastVisiblesItems, visibleItemCount, totalItemCount;
     private int favouriteRecipesMenuId;
     private int findRecipesMenuId;
     private int selectedMenuId;
@@ -66,7 +64,6 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
         toolbar.setTitle(getTitle());
         isLoading = true;
         isLoadingNewQuery = false;
-        searchTerms = "";
         page = 1;
         if (findViewById(R.id.recipe_detail_container) != null) {
             mTwoPane = true;
@@ -91,9 +88,9 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 if (dy > 0 && isLoadingNewQuery == false) {
-                    visibleItemCount = linearLayoutManager.getChildCount();
-                    totalItemCount = linearLayoutManager.getItemCount();
-                    pastVisiblesItems = linearLayoutManager.findFirstVisibleItemPosition();
+                    int visibleItemCount = linearLayoutManager.getChildCount();
+                    int totalItemCount = linearLayoutManager.getItemCount();
+                    int pastVisiblesItems = linearLayoutManager.findFirstVisibleItemPosition();
                     if (isLoading) {
                         if ((visibleItemCount + pastVisiblesItems) >= totalItemCount) {
                             isLoading = false;
@@ -193,7 +190,7 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
             isLoadingNewQuery = true;
             progressBarRecipeList.setVisibility(View.VISIBLE);
             if (selectedMenuId == findRecipesMenuId) {
-                searchTerms = searchViewRecipes.getQuery().toString();
+                String searchTerms = searchViewRecipes.getQuery().toString();
                 Uri.Builder builder = new Uri.Builder();
                 String apiKey = getString(R.string.api_key);
                 builder.scheme("http")
