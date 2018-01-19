@@ -13,7 +13,7 @@ import java.net.URL;
 
 public class FetchJSONTask extends AsyncTask<Void, Void, String> {
 
-    public static class ResponseMethod {
+    public static class RequestMethod {
         public static final String GET = "GET";
         public static final String POST = "POST";
         public static final String PUT = "PUT";
