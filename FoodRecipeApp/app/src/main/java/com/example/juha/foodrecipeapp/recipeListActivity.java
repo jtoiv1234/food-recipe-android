@@ -227,8 +227,6 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
                     emptyText.setVisibility(View.VISIBLE);
                 }
                 JSONArray recipesJSONArray = responseJSONObj.getJSONArray("recipes");
-                recipes.clear();
-                recipeRecyclerViewAdapter.notifyDataSetChanged();
                 for (int i = 0; i < recipesJSONArray.length(); i++) {
                     JSONObject recipeJSONObj = recipesJSONArray.getJSONObject(i);
                     String id = "";
