@@ -50,7 +50,6 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
 
     private int page;
     private boolean isLoading;
-    private boolean isLoadingNewQuery;
     private int favouriteRecipesMenuId;
     private int findRecipesMenuId;
     private int selectedMenuId;
@@ -62,8 +61,7 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
-        isLoading = true;
-        isLoadingNewQuery = false;
+        isLoading = false;
         page = 1;
         if (findViewById(R.id.recipe_detail_container) != null) {
             mTwoPane = true;
@@ -87,13 +85,12 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (dy > 0 && isLoadingNewQuery == false) {
+                if (dy > 0) {
                     int visibleItemCount = linearLayoutManager.getChildCount();
                     int totalItemCount = linearLayoutManager.getItemCount();
                     int pastVisiblesItems = linearLayoutManager.findFirstVisibleItemPosition();
-                    if (isLoading) {
+                    if (isLoading == false) {
                         if ((visibleItemCount + pastVisiblesItems) >= totalItemCount) {
-                            isLoading = false;
                             page = page + 1;
                             getNewRecipes();
                         }
@@ -143,39 +140,43 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_item_popularity:
-                searchViewRecipes.setEnabled(true);
-                textViewFavouriteRecipesTitle.setVisibility(View.GONE);
-                clearRecipeListAndResetPage();
-                sortingMethod = SORT_BY_RATING;
-                getNewRecipes();
-                return true;
-            case R.id.menu_item_trendiness:
-                searchViewRecipes.setEnabled(true);
-                textViewFavouriteRecipesTitle.setVisibility(View.GONE);
-                clearRecipeListAndResetPage();
-                sortingMethod = SORT_BY_TREND;
-                getNewRecipes();
-                return true;
-            case R.id.menu_item_find_recipes:
-                searchViewRecipes.setVisibility(View.VISIBLE);
-                textViewFavouriteRecipesTitle.setVisibility(View.GONE);
-                selectedMenuId = findRecipesMenuId;
-                clearRecipeListAndResetPage();
-                invalidateOptionsMenu();
-                getNewRecipes();
-                return true;
-            case R.id.menu_item_favourites_recipes:
-                searchViewRecipes.setVisibility(View.GONE);
-                selectedMenuId = favouriteRecipesMenuId;
-                textViewFavouriteRecipesTitle.setVisibility(View.VISIBLE);
-                clearRecipeListAndResetPage();
-                invalidateOptionsMenu();
-                getNewRecipes();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (isLoading == false) {
+            switch (item.getItemId()) {
+                case R.id.menu_item_popularity:
+                    searchViewRecipes.setEnabled(true);
+                    textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                    clearRecipeListAndResetPage();
+                    sortingMethod = SORT_BY_RATING;
+                    getNewRecipes();
+                    return true;
+                case R.id.menu_item_trendiness:
+                    searchViewRecipes.setEnabled(true);
+                    textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                    clearRecipeListAndResetPage();
+                    sortingMethod = SORT_BY_TREND;
+                    getNewRecipes();
+                    return true;
+                case R.id.menu_item_find_recipes:
+                    searchViewRecipes.setVisibility(View.VISIBLE);
+                    textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                    selectedMenuId = findRecipesMenuId;
+                    clearRecipeListAndResetPage();
+                    invalidateOptionsMenu();
+                    getNewRecipes();
+                    return true;
+                case R.id.menu_item_favourites_recipes:
+                    searchViewRecipes.setVisibility(View.GONE);
+                    selectedMenuId = favouriteRecipesMenuId;
+                    textViewFavouriteRecipesTitle.setVisibility(View.VISIBLE);
+                    clearRecipeListAndResetPage();
+                    invalidateOptionsMenu();
+                    getNewRecipes();
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+            }
+        } else {
+            return false;
         }
     }
 
@@ -186,8 +187,8 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
     }
 
     private void getNewRecipes() {
-        if (isLoadingNewQuery == false) {
-            isLoadingNewQuery = true;
+        if (isLoading == false) {
+            isLoading = true;
             progressBarRecipeList.setVisibility(View.VISIBLE);
             if (selectedMenuId == findRecipesMenuId) {
                 String searchTerms = searchViewRecipes.getQuery().toString();
@@ -216,7 +217,6 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
 
     @Override
     public void OnTaskComplete(String response) {
-        isLoading = true;
         if (response != null) {
             try {
                 JSONObject responseJSONObj = new JSONObject(response);
@@ -252,7 +252,7 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
                 e.printStackTrace();
             }
         }
-        isLoadingNewQuery = false;
+        isLoading = false;
         progressBarRecipeList.setVisibility(View.GONE);
     }
 
@@ -333,11 +333,9 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
                 recipes.add(savedRecipes.get(i));
                 recipeRecyclerViewAdapter.notifyDataSetChanged();
             }
-            isLoadingNewQuery = false;
+            isLoading = false;
             progressBarRecipeList.setVisibility(View.GONE);
         }
     }
-
-
 
 }
