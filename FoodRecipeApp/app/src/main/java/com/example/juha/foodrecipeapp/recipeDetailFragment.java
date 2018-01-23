@@ -94,6 +94,12 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
             FetchRecipeFromDatabaseTask fetchRecipeFromDatabaseTask = new FetchRecipeFromDatabaseTask();
             fetchRecipeFromDatabaseTask.execute();
         } else {
+            if (Utils.isConnection(getContext()) == false) {
+                textViewRecipeTitle.setText(R.string.no_internet_connection);
+                textViewRecipeTitle.setContentDescription(getString(R.string.no_internet_connection));
+                buttonFavouriteRecipe.setVisibility(View.GONE);
+                return;
+            }
             Uri.Builder builder = new Uri.Builder();
             String apiKey = getString(R.string.api_key);
             builder.scheme("http")
@@ -138,6 +144,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                     String ingredient = ingredients.get(i);
                     ingredientsAsString = ingredientsAsString + "\u2022 " + ingredient + "\n";
                 }
+                buttonFavouriteRecipe.setVisibility(View.VISIBLE);
                 Picasso.with(getContext())
                         .load(imageURL)
                         .placeholder(R.drawable.ic_place_holder)
@@ -147,6 +154,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                 textViewRecipeSourceURL.setText(sourceURL);
                 textViewRecipeIngredients.setText(ingredientsAsString);
                 textViewRecipeTitle.setText(title);
+                textViewRecipeTitle.setContentDescription(getString(R.string.content_desc_recipe_title));
                 if (appBarLayout != null) {
                     appBarLayout.setTitle(title);
                 }
@@ -221,6 +229,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                 appBarLayout.setTitle(recipe.title);
             }
             isRecipeSavedToFabourites = true;
+            buttonFavouriteRecipe.setVisibility(View.VISIBLE);
             buttonFavouriteRecipe.setText(getString(R.string.remove_from_favourites));
         }
     }
@@ -240,6 +249,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
         @Override
         protected void onPostExecute(Boolean isSavedToDatabase) {
             super.onPostExecute(isSavedToDatabase);
+            buttonFavouriteRecipe.setVisibility(View.VISIBLE);
             isRecipeSavedToFabourites = isSavedToDatabase.booleanValue();
             if (isRecipeSavedToFabourites) {
                 buttonFavouriteRecipe.setText(getString(R.string.remove_from_favourites));
