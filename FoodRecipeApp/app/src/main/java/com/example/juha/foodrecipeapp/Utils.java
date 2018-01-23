@@ -9,9 +9,9 @@ import android.net.NetworkInfo;
 public class Utils {
 
     public static boolean isConnection(Context context) {
-        ConnectivityManager connMgr = (ConnectivityManager)
+        ConnectivityManager connectivityManager = (ConnectivityManager)
                 context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         return (networkInfo != null && networkInfo.isConnected());
     }
 
