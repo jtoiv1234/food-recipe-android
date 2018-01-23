@@ -14,13 +14,10 @@
         android:visibility="gone"
         android:text="@string/no_recipes_found" />
 
-    <ProgressBar
-        android:id="@+id/progressBar_list"
-        style="?android:attr/progressBarStyle"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone" />
-
+        android:layout_height="wrap_content">
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recipe_list"
         android:name="com.example.juha.foodrecipeapp.recipeListFragment"
@@ -32,4 +29,5 @@
         tools:context="com.example.juha.foodrecipeapp.recipeListActivity"
         tools:listitem="@layout/recipe_list_content" >
     </android.support.v7.widget.RecyclerView>
+    </android.support.v4.widget.SwipeRefreshLayout>
 </LinearLayout>

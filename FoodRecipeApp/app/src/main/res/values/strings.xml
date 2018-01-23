@@ -23,4 +23,6 @@
     <string name="find_recipes_online">Find recipes online</string>
     <string name="recipe_removed_from_favourites">Recipe removed from favourites</string>
     <string name="recipe_added_to_favourites">Recipe added to favourites</string>
+    <string name="no_internet_connection">No internet connection</string>
+    <string name="empty"></string>
 </resources>

@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/content_desc_recipe_title"
-            android:text="@string/content_desc_recipe_title"
+            android:text="@string/empty"
             tools:text="@string/content_desc_recipe_title" />
 
         <Space
@@ -44,7 +44,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/content_desc_recipe_ingredients"
-            android:text="@string/content_desc_recipe_title"
+            android:text="@string/empty"
             tools:text="@string/content_desc_recipe_ingredients" />
 
         <Space
