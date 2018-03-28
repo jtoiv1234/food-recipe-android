@@ -33,12 +33,12 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
     private String recipeId;
     private Recipe recipe;
 
-    private Button buttonFavouriteRecipe;
+    private Button favouriteRecipeButton;
     private CollapsingToolbarLayout appBarLayout;
-    private ImageView imageViewRecipeImage;
-    private TextView textViewRecipeTitle;
-    private TextView textViewRecipeSourceURL;
-    private TextView textViewRecipeIngredients;
+    private ImageView recipeImageView;
+    private TextView recipeTitleTextView;
+    private TextView recipeSourceLTextView;
+    private TextView recipeIngredientsTextView;
 
     private boolean isRecipeSavedToFabourites;
     private boolean getRecipeFromDatabase;
@@ -56,7 +56,6 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                 getRecipeFromDatabase = true;
             }
             appBarLayout = null;
-            //appBarLayout = (CollapsingToolbarLayout) getActivity().findViewById(R.id.toolbar_layout);
         }
     }
 
@@ -64,13 +63,13 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.recipe_detail, container, false);
-        textViewRecipeTitle = (TextView) rootView.findViewById(R.id.recipe_detail_title);
-        textViewRecipeSourceURL = (TextView) rootView.findViewById(R.id.recipe_detail_source);
-        textViewRecipeIngredients = (TextView) rootView.findViewById(R.id.recipe_detail_ingredients);
-        imageViewRecipeImage = (ImageView) rootView.findViewById(R.id.recipe_detail_image);
-        buttonFavouriteRecipe = (Button) rootView.findViewById(R.id.recipe_detail_button_add_to_favourites);
-        buttonFavouriteRecipe.setEnabled(false);
-        buttonFavouriteRecipe.setOnClickListener(new View.OnClickListener() {
+        recipeTitleTextView = (TextView) rootView.findViewById(R.id.recipe_detail_title);
+        recipeSourceLTextView = (TextView) rootView.findViewById(R.id.recipe_detail_source);
+        recipeIngredientsTextView = (TextView) rootView.findViewById(R.id.recipe_detail_ingredients);
+        recipeImageView = (ImageView) rootView.findViewById(R.id.recipe_detail_image);
+        favouriteRecipeButton = (Button) rootView.findViewById(R.id.recipe_detail_button_add_to_favourites);
+        favouriteRecipeButton.setEnabled(false);
+        favouriteRecipeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (isRecipeSavedToFabourites) {
@@ -94,10 +93,10 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
             FetchRecipeFromDatabaseTask fetchRecipeFromDatabaseTask = new FetchRecipeFromDatabaseTask();
             fetchRecipeFromDatabaseTask.execute();
         } else {
-            if (Utils.isConnection(getContext()) == false) {
-                textViewRecipeTitle.setText(R.string.no_internet_connection);
-                textViewRecipeTitle.setContentDescription(getString(R.string.no_internet_connection));
-                buttonFavouriteRecipe.setVisibility(View.GONE);
+            if (Utilities.isConnection(getContext()) == false) {
+                recipeTitleTextView.setText(R.string.no_internet_connection);
+                recipeTitleTextView.setContentDescription(getString(R.string.no_internet_connection));
+                favouriteRecipeButton.setVisibility(View.GONE);
                 return;
             }
             Uri.Builder builder = new Uri.Builder();
@@ -144,17 +143,17 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                     String ingredient = ingredients.get(i);
                     ingredientsAsString = ingredientsAsString + "\u2022 " + ingredient + "\n";
                 }
-                buttonFavouriteRecipe.setVisibility(View.VISIBLE);
+                favouriteRecipeButton.setVisibility(View.VISIBLE);
                 Picasso.with(getContext())
                         .load(imageURL)
                         .placeholder(R.drawable.ic_place_holder)
                         .error(R.mipmap.ic_error_text)
-                        .into(imageViewRecipeImage);
+                        .into(recipeImageView);
                 recipe = new Recipe(recipeId, title, imageURL, sourceURL, ingredients);
-                textViewRecipeSourceURL.setText(sourceURL);
-                textViewRecipeIngredients.setText(ingredientsAsString);
-                textViewRecipeTitle.setText(title);
-                textViewRecipeTitle.setContentDescription(getString(R.string.content_desc_recipe_title));
+                recipeSourceLTextView.setText(sourceURL);
+                recipeIngredientsTextView.setText(ingredientsAsString);
+                recipeTitleTextView.setText(title);
+                recipeTitleTextView.setContentDescription(getString(R.string.content_desc_recipe_title));
                 if (appBarLayout != null) {
                     appBarLayout.setTitle(title);
                 }
@@ -178,7 +177,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
             super.onPostExecute(aVoid);
             Snackbar.make(rootView, getString(R.string.recipe_added_to_favourites), Snackbar.LENGTH_SHORT).show();
             isRecipeSavedToFabourites = true;
-            buttonFavouriteRecipe.setText(getString(R.string.remove_from_favourites));
+            favouriteRecipeButton.setText(getString(R.string.remove_from_favourites));
         }
     }
 
@@ -196,7 +195,7 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
             super.onPostExecute(aVoid);
             Snackbar.make(rootView, getString(R.string.recipe_removed_from_favourites), Snackbar.LENGTH_SHORT).show();
             isRecipeSavedToFabourites = false;
-            buttonFavouriteRecipe.setText(getString(R.string.add_to_favourites));
+            favouriteRecipeButton.setText(getString(R.string.add_to_favourites));
         }
     }
 
@@ -216,21 +215,21 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
                     .load(recipe.imageURL)
                     .placeholder(R.drawable.ic_place_holder)
                     .error(R.mipmap.ic_error_text)
-                    .into(imageViewRecipeImage);
-            textViewRecipeSourceURL.setText(recipe.sourceURL);
+                    .into(recipeImageView);
+            recipeSourceLTextView.setText(recipe.sourceURL);
             String ingredientsAsString = "";
             for (int i = 0; i < recipe.ingredients.size(); i++) {
                 String ingredient = recipe.ingredients.get(i);
                 ingredientsAsString = ingredientsAsString + "\u2022 " + ingredient + "\n";
             }
-            textViewRecipeIngredients.setText(ingredientsAsString);
-            textViewRecipeTitle.setText(recipe.title);
+            recipeIngredientsTextView.setText(ingredientsAsString);
+            recipeTitleTextView.setText(recipe.title);
             if (appBarLayout != null) {
                 appBarLayout.setTitle(recipe.title);
             }
             isRecipeSavedToFabourites = true;
-            buttonFavouriteRecipe.setVisibility(View.VISIBLE);
-            buttonFavouriteRecipe.setText(getString(R.string.remove_from_favourites));
+            favouriteRecipeButton.setVisibility(View.VISIBLE);
+            favouriteRecipeButton.setText(getString(R.string.remove_from_favourites));
         }
     }
 
@@ -249,14 +248,14 @@ public class recipeDetailFragment extends Fragment implements OnTaskComplete {
         @Override
         protected void onPostExecute(Boolean isSavedToDatabase) {
             super.onPostExecute(isSavedToDatabase);
-            buttonFavouriteRecipe.setVisibility(View.VISIBLE);
+            favouriteRecipeButton.setVisibility(View.VISIBLE);
             isRecipeSavedToFabourites = isSavedToDatabase.booleanValue();
             if (isRecipeSavedToFabourites) {
-                buttonFavouriteRecipe.setText(getString(R.string.remove_from_favourites));
+                favouriteRecipeButton.setText(getString(R.string.remove_from_favourites));
             } else {
-                buttonFavouriteRecipe.setText(getString(R.string.add_to_favourites));
+                favouriteRecipeButton.setText(getString(R.string.add_to_favourites));
             }
-            buttonFavouriteRecipe.setEnabled(true);
+            favouriteRecipeButton.setEnabled(true);
         }
     }
 

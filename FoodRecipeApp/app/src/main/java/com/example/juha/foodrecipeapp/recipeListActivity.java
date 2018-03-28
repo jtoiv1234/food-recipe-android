@@ -18,7 +18,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.TextView;
 
@@ -42,11 +41,11 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
     private ArrayList<Recipe> recipes = new ArrayList<>();
 
     private LinearLayoutManager linearLayoutManager;
-    private RecyclerView recyclerView;
+    private RecyclerView recipesRecyclerView;
     private RecipeRecyclerViewAdapter recipeRecyclerViewAdapter;
-    private SearchView searchViewRecipes;
-    private TextView textViewEmptyText;
-    private TextView textViewFavouriteRecipesTitle;
+    private SearchView recipeSearchView;
+    private TextView errorTextView;
+    private TextView favouriteRecipesTitleTextView;
     private SwipeRefreshLayout swipeRefreshLayout;
 
     private int page;
@@ -70,17 +69,17 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
         favouriteRecipesMenuId = R.menu.favourites_menu_list;
         findRecipesMenuId = R.menu.main_menu_list;
         selectedMenuId = findRecipesMenuId;
-        textViewEmptyText = (TextView) findViewById(R.id.empty_view);
-        recyclerView = (RecyclerView) findViewById(R.id.recipe_list);
-        searchViewRecipes = (SearchView) findViewById(R.id.searchView_toolbar_recipes);
-        textViewFavouriteRecipesTitle = (TextView) findViewById(R.id.textView_toolbar_favourite_recipes);
-        textViewFavouriteRecipesTitle.setVisibility(View.GONE);
-        assert recyclerView != null;
+        errorTextView = (TextView) findViewById(R.id.empty_view);
+        recipesRecyclerView = (RecyclerView) findViewById(R.id.recipe_list);
+        recipeSearchView = (SearchView) findViewById(R.id.searchView_toolbar_recipes);
+        favouriteRecipesTitleTextView = (TextView) findViewById(R.id.textView_toolbar_favourite_recipes);
+        favouriteRecipesTitleTextView.setVisibility(View.GONE);
+        assert recipesRecyclerView != null;
         recipeRecyclerViewAdapter = new RecipeRecyclerViewAdapter();
-        recyclerView.setAdapter(recipeRecyclerViewAdapter);
+        recipesRecyclerView.setAdapter(recipeRecyclerViewAdapter);
         linearLayoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(linearLayoutManager);
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        recipesRecyclerView.setLayoutManager(linearLayoutManager);
+        recipesRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
@@ -98,7 +97,7 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
             }
         });
 
-        searchViewRecipes.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        recipeSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
             @Override
             public boolean onQueryTextSubmit(String s) {
@@ -142,8 +141,8 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(selectedMenuId, menu);
-        int options = searchViewRecipes.getImeOptions();
-        searchViewRecipes.setImeOptions(options| EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        int options = recipeSearchView.getImeOptions();
+        recipeSearchView.setImeOptions(options| EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         return true;
     }
 
@@ -152,31 +151,31 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
         if (isLoading == false) {
             switch (item.getItemId()) {
                 case R.id.menu_item_popularity:
-                    searchViewRecipes.setEnabled(true);
-                    textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                    recipeSearchView.setEnabled(true);
+                    favouriteRecipesTitleTextView.setVisibility(View.GONE);
                     clearRecipeListAndResetPage();
                     sortingMethod = SORT_BY_RATING;
                     getNewRecipes();
                     return true;
                 case R.id.menu_item_trendiness:
-                    searchViewRecipes.setEnabled(true);
-                    textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                    recipeSearchView.setEnabled(true);
+                    favouriteRecipesTitleTextView.setVisibility(View.GONE);
                     clearRecipeListAndResetPage();
                     sortingMethod = SORT_BY_TREND;
                     getNewRecipes();
                     return true;
                 case R.id.menu_item_find_recipes:
-                    searchViewRecipes.setVisibility(View.VISIBLE);
-                    textViewFavouriteRecipesTitle.setVisibility(View.GONE);
+                    recipeSearchView.setVisibility(View.VISIBLE);
+                    favouriteRecipesTitleTextView.setVisibility(View.GONE);
                     selectedMenuId = findRecipesMenuId;
                     clearRecipeListAndResetPage();
                     invalidateOptionsMenu();
                     getNewRecipes();
                     return true;
                 case R.id.menu_item_favourites_recipes:
-                    searchViewRecipes.setVisibility(View.GONE);
+                    recipeSearchView.setVisibility(View.GONE);
                     selectedMenuId = favouriteRecipesMenuId;
-                    textViewFavouriteRecipesTitle.setVisibility(View.VISIBLE);
+                    favouriteRecipesTitleTextView.setVisibility(View.VISIBLE);
                     clearRecipeListAndResetPage();
                     invalidateOptionsMenu();
                     getNewRecipes();
@@ -190,7 +189,7 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
     }
 
     private void clearRecipeListAndResetPage() {
-        textViewEmptyText.setVisibility(View.GONE);
+        errorTextView.setVisibility(View.GONE);
         page = 1;
         recipes.clear();
         recipeRecyclerViewAdapter.notifyDataSetChanged();
@@ -201,14 +200,14 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
             isLoading = true;
             swipeRefreshLayout.setRefreshing(true);
             if (selectedMenuId == findRecipesMenuId) {
-                if (Utils.isConnection(getApplicationContext()) == false) {
+                if (Utilities.isConnection(getApplicationContext()) == false) {
                     isLoading = false;
-                    textViewEmptyText.setVisibility(View.VISIBLE);
-                    textViewEmptyText.setText(R.string.no_internet_connection);
+                    errorTextView.setVisibility(View.VISIBLE);
+                    errorTextView.setText(R.string.no_internet_connection);
                     swipeRefreshLayout.setRefreshing(false);
                     return;
                 }
-                String searchTerms = searchViewRecipes.getQuery().toString();
+                String searchTerms = recipeSearchView.getQuery().toString();
                 Uri.Builder builder = new Uri.Builder();
                 String apiKey = getString(R.string.api_key);
                 builder.scheme("http")
@@ -234,9 +233,9 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
 
     @Override
     public void OnTaskComplete(String response) {
-        if (Utils.isConnection(getApplicationContext()) == false) {
-            textViewEmptyText.setVisibility(View.VISIBLE);
-            textViewEmptyText.setText(R.string.no_internet_connection);
+        if (Utilities.isConnection(getApplicationContext()) == false) {
+            errorTextView.setVisibility(View.VISIBLE);
+            errorTextView.setText(R.string.no_internet_connection);
             response = null;
         }
         if (response != null) {
@@ -244,9 +243,9 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
                 JSONObject responseJSONObj = new JSONObject(response);
                 int count = responseJSONObj.getInt("count");
                 if (count > 0) {
-                    textViewEmptyText.setVisibility(View.INVISIBLE);
+                    errorTextView.setVisibility(View.INVISIBLE);
                 } else {
-                    textViewEmptyText.setVisibility(View.VISIBLE);
+                    errorTextView.setVisibility(View.VISIBLE);
                 }
                 JSONArray recipesJSONArray = responseJSONObj.getJSONArray("recipes");
                 for (int i = 0; i < recipesJSONArray.length(); i++) {
@@ -358,10 +357,10 @@ public class recipeListActivity extends AppCompatActivity implements OnTaskCompl
             isLoading = false;
             swipeRefreshLayout.setRefreshing(false);
             if (recipes.size() > 0) {
-                textViewEmptyText.setVisibility(View.INVISIBLE);
+                errorTextView.setVisibility(View.INVISIBLE);
             } else {
-                textViewEmptyText.setVisibility(View.VISIBLE);
-                textViewEmptyText.setText(R.string.no_recipes_found);
+                errorTextView.setVisibility(View.VISIBLE);
+                errorTextView.setText(R.string.no_recipes_found);
             }
         }
     }
